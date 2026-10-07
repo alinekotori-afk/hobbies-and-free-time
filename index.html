@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempo Livre e Hobbies - Flashcards Interativos</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --bg: #f5f3ff;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #ddd6fe;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      max-width: 720px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      color: #4c1d95;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .top-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .btn-toggle-lang {
+      background-color: #4c1d95;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .btn-toggle-lang:hover {
+      background-color: #5b21b6;
+      transform: translateY(-1px);
+    }
+
+    .category-filter {
+      padding: 0.6rem 1rem;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      background-color: #fff;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .btn-info {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.6rem 1rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+      background-color: #ede9fe;
+    }
+
+    /* Modal Gramática e Dicas */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+      color: #4c1d95;
+    }
+
+    .modal p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #334155;
+      margin-bottom: 0.8rem;
+    }
+
+    .modal .close-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      float: right;
+      margin-top: 0.5rem;
+    }
+
+    /* Flashcard Container */
+    .card-scene {
+      width: 100%;
+      max-width: 600px;
+      height: 330px;
+      perspective: 1000px;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #fafafa;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .card-badge {
+      background: #ede9fe;
+      color: var(--primary-dark);
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      flex-grow: 1;
+      padding: 0.5rem 0;
+    }
+
+    .card-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.45;
+      margin-bottom: 0.5rem;
+      color: #1e293b;
+    }
+
+    .card-hint {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .btn-speak {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.3rem;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .btn-speak:hover {
+      background: #ede9fe;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-nav {
+      background: white;
+      border: 1px solid var(--border);
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+
+    .btn-nav:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .btn-flip {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.2);
+      transition: all 0.2s;
+    }
+
+    .btn-flip:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-shuffle {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .btn-shuffle:hover {
+      background: #ede9fe;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      max-width: 600px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .counter-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Perguntas sobre Tempo Livre e Hobbies</h1>
+    <p class="subtitle">Prática oral e conversação: rotina, fins de semana e situações hipotéticas</p>
+  </header>
+
+  <div class="top-controls">
+    <button class="btn-toggle-lang" id="btn-toggle-direction" onclick="toggleLanguageDirection()">
+      <span id="lang-direction-label">🇧🇷 Português ➔ 🇺🇸 Inglês</span>
+    </button>
+    <select class="category-filter" id="category-select" onchange="filterCategory()">
+      <option value="ALL">Todas as Perguntas (11 cartões)</option>
+      <option value="Tempo Livre">Tempo Livre & Rotina</option>
+      <option value="Fim de Semana">Fim de Semana Passado</option>
+      <option value="Hobbies">Hobbies & Preferências</option>
+      <option value="Hipotético">Situações Hipotéticas</option>
+    </select>
+    <button class="btn-info" onclick="toggleModal(true)">💡 Guia de Conversação</button>
+  </div>
+
+  <div class="card-scene" onclick="flipCard()">
+    <div class="card" id="flashcard">
+      <div class="card-face card-front">
+        <div class="card-header">
+          <span class="card-badge" id="front-category">Categoria</span>
+          <span id="front-flag">🇧🇷 Frente</span>
+        </div>
+        <div class="card-body">
+          <div class="card-text" id="front-text">Pergunta</div>
+          <div class="card-hint" id="front-hint">Dica gramatical / Vocabulário</div>
+        </div>
+        <div class="card-footer">
+          <span>Clique para virar ↺</span>
+          <button class="btn-speak" onclick="speakText(event, 'front')" title="Ouvir pronúncia">🔊</button>
+        </div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-header">
+          <span class="card-badge" id="back-category">Categoria</span>
+          <span id="back-flag">🇺🇸 Verso</span>
+        </div>
+        <div class="card-body">
+          <div class="card-text" id="back-text">Tradução</div>
+          <div class="card-hint" id="back-hint">Tradução / Vocabulário</div>
+        </div>
+        <div class="card-footer">
+          <span>Clique para virar ↺</span>
+          <button class="btn-speak" onclick="speakText(event, 'back')" title="Ouvir pronúncia">🔊</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <div class="counter-text" id="card-counter">1 de 1</div>
+
+  <div class="controls" style="margin-top: 1rem;">
+    <button class="btn-nav" onclick="prevCard()" title="Anterior (←)">‹</button>
+    <button class="btn-flip" onclick="flipCard()">Virar Cartão</button>
+    <button class="btn-nav" onclick="nextCard()" title="Próximo (→)">›</button>
+    <button class="btn-shuffle" onclick="shuffleCards()" title="Embaralhar">🔀</button>
+  </div>
+
+  <div class="modal" id="info-modal" onclick="if(event.target === this) toggleModal(false)">
+    <div class="modal-content">
+      <h2>Estruturas de Resposta para os Alunos</h2>
+      <p>• <strong>Tempo Livre & Hábitos:</strong> Incentive o uso do Presente do Indicativo ("No meu tempo livre eu gosto de ler / praticar esportes...").</p>
+      <p>• <strong>Fim de Semana:</strong> Pratique o Pretérito Perfeito ("No último fim de semana eu fui ao cinema / descansei...").</p>
+      <p>• <strong>Situações Hipotéticas (Se...):</strong> Pratique a correlação condicional com o Futuro do Pretérito ("Se eu tivesse mais tempo, eu viajaria mais...").</p>
+      <p>• <strong>Atalhos de Teclado:</strong> <code>Espaço</code> para virar, <code>←</code> para anterior e <code>→</code> para próximo.</p>
+      <button class="close-btn" onclick="toggleModal(false)">Entendido!</button>
+    </div>
+  </div>
+
+  <script>
+    const fullDeck = [
+      {
+        pt: "Você tem tempo livre suficiente?",
+        en: "Do you have enough free time?",
+        category: "Tempo Livre",
+        hintPt: "Presente: 'Sim, eu tenho...' / 'Não, eu não tenho...'",
+        hintEn: "Asking about free time availability"
+      },
+      {
+        pt: "O que você fez no último fim de semana?",
+        en: "What did you do last weekend?",
+        category: "Fim de Semana",
+        hintPt: "Pretérito Perfeito: 'No último fim de semana eu viajei/descansei...'",
+        hintEn: "Simple past of do: 'did you do'"
+      },
+      {
+        pt: "O que você faz no seu tempo livre?",
+        en: "What do you do in your free time?",
+        category: "Tempo Livre",
+        hintPt: "Hábitos no presente: 'Eu costumo ler, cozinhar...'",
+        hintEn: "Present routine activities"
+      },
+      {
+        pt: "Quais passatempos você tem?",
+        en: "What hobbies do you have?",
+        category: "Hobbies",
+        hintPt: "Passatempos e interesses pessoais",
+        hintEn: "Personal interests and hobbies"
+      },
+      {
+        pt: "Se você tivesse mais tempo livre, o que você faria com ele?",
+        en: "If you had more free time, what would you do with it?",
+        category: "Hipotético",
+        hintPt: "Condicional: 'Se eu tivesse..., eu faria...'",
+        hintEn: "Second conditional: 'If you had..., what would you do...'"
+      },
+      {
+        pt: "Se fosse anunciado de repente que amanhã é feriado nacional, o que você faria?",
+        en: "If it were suddenly announced that tomorrow was a national holiday, what would you do?",
+        category: "Hipotético",
+        hintPt: "Condicional: 'Se fosse anunciado..., eu viajaria/dormiria...'",
+        hintEn: "Second conditional: 'If it were..., what would you do...'"
+      },
+      {
+        pt: "O que você realmente odeia ter que fazer no seu tempo livre?",
+        en: "What do you really hate having to do in your free time?",
+        category: "Tempo Livre",
+        hintPt: "Expressão: 'odiar ter que + infinitivo'",
+        hintEn: "Obligations disliked during off-time"
+      },
+      {
+        pt: "Quais são os seus hobbies?",
+        en: "What are your hobbies?",
+        category: "Hobbies",
+        hintPt: "Identificação de hobbies e atividades de lazer",
+        hintEn: "Direct question about hobbies"
+      },
+      {
+        pt: "Quais hobbies são os mais populares no seu país?",
+        en: "Which hobbies are the most popular in your country?",
+        category: "Hobbies",
+        hintPt: "Superlativo: 'os mais populares' (ex: futebol, praia, dança)",
+        hintEn: "Superlative: 'the most popular'"
+      },
+      {
+        pt: "Há algum hobby que você gostaria de experimentar?",
+        en: "Are there any hobbies you would like to try?",
+        category: "Hobbies",
+        hintPt: "Gostaria de + infinitivo: 'Eu gostaria de experimentar...'",
+        hintEn: "Would like to try + hobby"
+      },
+      {
+        pt: "Quais hobbies você acha que são os mais difíceis?",
+        en: "Which hobbies do you think are the most difficult?",
+        category: "Hobbies",
+        hintPt: "Expressão de opinião: 'Eu acho que... são os mais difíceis'",
+        hintEn: "Expressing opinion on difficulty"
+      }
+    ];
+
+    let currentDeck = [...fullDeck];
+    let currentIndex = 0;
+    let isPtToEn = true;
+    let isFlipped = false;
+
+    const flashcardEl = document.getElementById("flashcard");
+    const frontTextEl = document.getElementById("front-text");
+    const frontHintEl = document.getElementById("front-hint");
+    const frontCategoryEl = document.getElementById("front-category");
+    const frontFlagEl = document.getElementById("front-flag");
+
+    const backTextEl = document.getElementById("back-text");
+    const backHintEl = document.getElementById("back-hint");
+    const backCategoryEl = document.getElementById("back-category");
+    const backFlagEl = document.getElementById("back-flag");
+
+    const progressBarEl = document.getElementById("progress-bar");
+    const cardCounterEl = document.getElementById("card-counter");
+    const langDirectionLabelEl = document.getElementById("lang-direction-label");
+
+    function renderCard() {
+      isFlipped = false;
+      flashcardEl.classList.remove("is-flipped");
+
+      const item = currentDeck[currentIndex];
+      if (!item) return;
+
+      if (isPtToEn) {
+        frontTextEl.textContent = item.pt;
+        frontHintEl.textContent = item.hintPt;
+        frontCategoryEl.textContent = item.category;
+        frontFlagEl.textContent = "🇧🇷 Português";
+
+        backTextEl.textContent = item.en;
+        backHintEl.textContent = item.hintEn;
+        backCategoryEl.textContent = item.category;
+        backFlagEl.textContent = "🇺🇸 Inglês";
+      } else {
+        frontTextEl.textContent = item.en;
+        frontHintEl.textContent = item.hintEn;
+        frontCategoryEl.textContent = item.category;
+        frontFlagEl.textContent = "🇺🇸 Inglês";
+
+        backTextEl.textContent = item.pt;
+        backHintEl.textContent = item.hintPt;
+        backCategoryEl.textContent = item.category;
+        backFlagEl.textContent = "🇧🇷 Português";
+      }
+
+      const total = currentDeck.length;
+      cardCounterEl.textContent = `${currentIndex + 1} de ${total}`;
+      progressBarEl.style.width = `${((currentIndex + 1) / total) * 100}%`;
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      flashcardEl.classList.toggle("is-flipped", isFlipped);
+    }
+
+    function nextCard() {
+      if (currentIndex < currentDeck.length - 1) {
+        currentIndex++;
+      } else {
+        currentIndex = 0;
+      }
+      renderCard();
+    }
+
+    function prevCard() {
+      if (currentIndex > 0) {
+        currentIndex--;
+      } else {
+        currentIndex = currentDeck.length - 1;
+      }
+      renderCard();
+    }
+
+    function toggleLanguageDirection() {
+      isPtToEn = !isPtToEn;
+      langDirectionLabelEl.textContent = isPtToEn 
+        ? "🇧🇷 Português ➔ 🇺🇸 Inglês" 
+        : "🇺🇸 Inglês ➔ 🇧🇷 Português";
+      renderCard();
+    }
+
+    function filterCategory() {
+      const selected = document.getElementById("category-select").value;
+      if (selected === "ALL") {
+        currentDeck = [...fullDeck];
+      } else {
+        currentDeck = fullDeck.filter(item => item.category === selected);
+      }
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function shuffleCards() {
+      for (let i = currentDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+      }
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function toggleModal(show) {
+      document.getElementById("info-modal").style.display = show ? "flex" : "none";
+    }
+
+    function speakText(e, face) {
+      e.stopPropagation();
+      if (!('speechSynthesis' in window)) {
+        alert("Áudio não suportado neste navegador.");
+        return;
+      }
+      const item = currentDeck[currentIndex];
+      let textToSpeak = "";
+      let lang = "pt-BR";
+
+      if (face === 'front') {
+        textToSpeak = isPtToEn ? item.pt : item.en;
+        lang = isPtToEn ? "pt-BR" : "en-US";
+      } else {
+        textToSpeak = isPtToEn ? item.en : item.pt;
+        lang = isPtToEn ? "en-US" : "pt-BR";
+      }
+
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = lang;
+      utterance.rate = 0.9;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        flipCard();
+      } else if (e.code === "ArrowRight") {
+        nextCard();
+      } else if (e.code === "ArrowLeft") {
+        prevCard();
+      }
+    });
+
+    renderCard();
+  </script>
+</body>
+</html>
